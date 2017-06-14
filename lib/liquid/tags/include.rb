@@ -15,7 +15,7 @@ module Liquid
   #   {% include 'product' for products %}
   #
   class Include < Tag
-    Syntax = /(#{QuotedFragment}+)(\s+(?:with|for)\s+(#{QuotedFragment}+))?/o
+    Syntax = /(#{QuotedFragment}+)(\s+(with|for)\s+(#{QuotedFragment}+))?/o
 
     def initialize(tag_name, markup, options)
       super
@@ -23,7 +23,8 @@ module Liquid
       if markup =~ Syntax
 
         @template_name = $1
-        @variable_name = $3
+        @local_inclusion_type = $3
+        @variable_name = $4
         @attributes    = {}
 
         markup.scan(TagAttributes) do |key, value|
@@ -48,7 +49,7 @@ module Liquid
         end
 
         context_variable_name = @template_name[1..-2].split('/'.freeze).last
-        if variable.is_a?(Array)
+        if variable.is_a?(Array) && @local_inclusion_type != 'with'
           variable.collect do |var|
             context[context_variable_name] = var
             partial.render(context)
